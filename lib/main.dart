@@ -1,10 +1,16 @@
 import 'package:conextar/constants/theme.dart';
 import 'package:conextar/providers/app_provider_container.dart';
+import 'package:conextar/sockets/init.dart';
 import 'package:conextar/views/splash/splash_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Bootstrap the socket system background connection tunnel
+  await SocketService().init();
+
   runApp(
     ProviderScope(
       child: UncontrolledProviderScope(

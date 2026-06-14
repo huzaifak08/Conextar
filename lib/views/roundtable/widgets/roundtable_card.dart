@@ -1,6 +1,7 @@
 import 'package:conextar/models/roundtable_model.dart';
 import 'package:conextar/providers/roundtable_participant/roundtable_participant_provider.dart';
 import 'package:conextar/views/roundtable/widgets/participants_stack.dart';
+import 'package:conextar/views/roundtable_explore/roundtable_explore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +41,12 @@ class RoundtableCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          // Enter room workspace stream
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RoundtableExplore(roundtable: roundtable),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(18.0),

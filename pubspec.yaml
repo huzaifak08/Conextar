@@ -41,6 +41,7 @@ dependencies:
   pinput: ^6.0.2
   riverpod_annotation: ^4.0.3
   shared_preferences: ^2.5.5
+  socket_io_client: ^3.1.6
   talker_dio_logger: ^5.1.17
   talker_flutter: ^5.1.17
 
