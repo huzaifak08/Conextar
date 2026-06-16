@@ -4,7 +4,7 @@ enum Environment { local, localIP, development, production, lounging }
 
 class Endpoints {
   // 1. Set your active target environment here
-  static Environment currentEnvironment = Environment.localIP;
+  static Environment currentEnvironment = Environment.development;
 
   // 2. Computed getter to fix the environment switching bug safely
   static String get baseUrl {
@@ -15,7 +15,7 @@ class Endpoints {
         return 'http://192.168.1.15:3000';
       case Environment.development:
         // Typical AWS setup: API Gateway custom domain or ALB Subdomain
-        return 'https://api-dev.contextar.theqlu.com';
+        return 'http://52.214.206.137:3000';
       case Environment.production:
         // Production Domain pointing to CloudFront, Route 53, or an AWS Load Balancer
         return 'https://api.contextar.theqlu.com';
@@ -33,7 +33,7 @@ class Endpoints {
       case Environment.localIP:
         return 'ws://192.168.100.114:3000';
       case Environment.development:
-        return 'wss://ws-dev.contextar.theqlu.com';
+        return 'wss://52.214.206.137:3000';
       case Environment.production:
         return 'wss://ws.contextar.theqlu.com';
       case Environment.lounging:

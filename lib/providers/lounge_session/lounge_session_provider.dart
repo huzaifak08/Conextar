@@ -150,7 +150,8 @@ class LoungeSession extends _$LoungeSession {
         await session.setActive(true);
       }
 
-      const liveKitServerUrl = "ws://192.168.1.15:7880";
+      // const liveKitServerUrl = "ws://192.168.1.15:7880";
+      const liveKitServerUrl = "ws://52.214.206.137:7880";
 
       await _liveKitRoom!
           .connect(
