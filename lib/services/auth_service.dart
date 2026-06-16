@@ -157,8 +157,11 @@ class AuthService {
 
   Future<ApiResponse<void>> logout() async {
     try {
+      final refreshToken = await SpHelper.getRefreshToken();
+
       final Response response = await DioApiClient.postRequest(
         "/api/v1/auth/logout",
+        data: {"refreshToken": refreshToken},
       );
       final body = response.data;
 

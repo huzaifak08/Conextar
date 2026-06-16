@@ -1,4 +1,6 @@
 import 'package:conextar/components/custom_button.dart';
+import 'package:conextar/components/global_media_overlay.dart';
+import 'package:conextar/providers/lounge_session/lounge_session_provider.dart';
 import 'package:conextar/providers/roundtable/roundtable_provider.dart';
 import 'package:conextar/views/profile/profile_view.dart';
 import 'package:conextar/views/roundtable/widgets/create_bottom_sheet.dart';
@@ -31,7 +33,11 @@ class RoundtableView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final roundtablesAsync = ref.watch(roundtableProvider);
+    final loungeSession = ref.watch(loungeSessionProvider);
     final theme = Theme.of(context);
+
+    // 🎯 DOCK DETECTION: Adjust padding if the global media bar is active
+    final bool isDockActive = loungeSession.myOccupiedSofaIndex != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -52,72 +58,101 @@ class RoundtableView extends ConsumerWidget {
           const SizedBox(width: 12),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(roundtableProvider.notifier).refreshRoundtables(),
-        color: theme.colorScheme.primary,
-        backgroundColor: theme.cardColor,
-        child: roundtablesAsync.when(
-          data: (roundtables) {
-            if (roundtables.isEmpty) {
-              return _buildEmptyState(context);
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              itemCount: roundtables.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                return RoundtableCard(roundtable: roundtables[index]);
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                "Error loading terminals: $err",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-            ),
-          ),
-        ),
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      // 🧩 WRAPPED IN A STACK: Places the persistent voice controls on top of the list
+      body: Stack(
         children: [
-          FloatingActionButton.small(
-            heroTag: "joinBtn",
-            onPressed: () => _showJoinBottomSheet(context),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          RefreshIndicator(
+            onRefresh: () =>
+                ref.read(roundtableProvider.notifier).refreshRoundtables(),
+            color: theme.colorScheme.primary,
+            backgroundColor: theme.cardColor,
+            child: roundtablesAsync.when(
+              data: (roundtables) {
+                if (roundtables.isEmpty) {
+                  return _buildEmptyState(context);
+                }
+                return ListView.separated(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 16,
+                    bottom: isDockActive
+                        ? 120
+                        : 16, // 🎯 Pushes cards up so the overlay dock doesn't block them
+                  ),
+                  itemCount: roundtables.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    return RoundtableCard(roundtable: roundtables[index]);
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    "Error loading terminals: $err",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                ),
               ),
             ),
-            child: const Icon(Icons.vpn_key_outlined),
           ),
-          const SizedBox(width: 12),
-          FloatingActionButton.extended(
-            heroTag: "createBtn",
-            onPressed: () => _showCreateBottomSheet(context),
-            icon: Icon(
-              Icons.add,
-              color: Theme.of(context).scaffoldBackgroundColor,
+
+          // 🎙️ THE HUD OVERLAY: Anchored safely at the bottom of the stack
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: 130,
+              ), // Positioned cleanly above FAB alignment rows
+              child: GlobalMediaOverlay(),
             ),
-            label: Text(
-              "NEW TABLE",
-              style: TextStyle(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
-              ),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         ],
+      ),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: isDockActive ? 30 : 0,
+        ), // 🎯 Shifts FAB up slightly if dock is active
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: "joinBtn",
+              onPressed: () => _showJoinBottomSheet(context),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                ),
+              ),
+              child: const Icon(Icons.vpn_key_outlined),
+            ),
+            const SizedBox(width: 12),
+            FloatingActionButton.extended(
+              heroTag: "createBtn",
+              onPressed: () => _showCreateBottomSheet(context),
+              icon: Icon(
+                Icons.add,
+                color: Theme.of(context).scaffoldBackgroundColor,
+              ),
+              label: Text(
+                "NEW TABLE",
+                style: TextStyle(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          ],
+        ),
       ),
     );
   }

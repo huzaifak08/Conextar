@@ -95,9 +95,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // }
 
   // =========================================================================
-  // LOGOUT LIFECYCLE
+  // LOGOUT LIFECYCLE (Fixed Context Race Condition)
   // =========================================================================
   void _handleLogout() async {
+    // 🎯 FIX: Capture the global root navigator shell instance context
+    // synchronously BEFORE entering the asynchronous thread execution loop.
+    final navigator = Navigator.of(context, rootNavigator: true);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -125,14 +129,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           ),
           TextButton(
             onPressed: () async {
+              // 1. Instantly pop the AlertDialog off the screen layout array
               Navigator.pop(context);
+
+              // 2. Fire full session teardown network pipelines
               await ref.read(currentUserProvider.notifier).logoutUser();
-              if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const SigninView()),
-                  (route) => false,
-                );
-              }
+
+              // 3. 🎯 FIX: Use the pre-cached reference to clear the navigation history
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const SigninView()),
+                (route) => false,
+              );
             },
             child: const Text(
               "DISCONNECT",
